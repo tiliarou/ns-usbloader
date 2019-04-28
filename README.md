@@ -112,7 +112,6 @@ Français by [Stephane Meden (JackFromNice)](https://github.com/JackFromNice)
 
 Italian by [unbranched](https://github.com/unbranched)
 
-
 #### TODO (maybe):
 - [x] macOS QA v0.1  (Mojave)
 - [x] macOS QA v0.2.2 (Mojave)
