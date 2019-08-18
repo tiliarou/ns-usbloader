@@ -25,15 +25,12 @@ import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.ListIterator;
 import java.util.ResourceBundle;
 
 public class NSTableViewController implements Initializable {
     @FXML
     private TableView<NSLRowModel> table;
     private ObservableList<NSLRowModel> rowsObsLst;
-
-    private String protocol;
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
@@ -55,7 +52,6 @@ public class NSTableViewController implements Initializable {
                     } else if (keyEvent.getCode() == KeyCode.SPACE) {
                         for (NSLRowModel item : table.getSelectionModel().getSelectedItems()) {
                             item.setMarkForUpload(!item.isMarkForUpload());
-                            restrictSelection(item);
                         }
                         table.refresh();
                     }
@@ -64,10 +60,10 @@ public class NSTableViewController implements Initializable {
             }
         });
 
-        TableColumn<NSLRowModel, String> statusColumn = new TableColumn<>(resourceBundle.getString("tableStatusLbl"));
-        TableColumn<NSLRowModel, String> fileNameColumn = new TableColumn<>(resourceBundle.getString("tableFileNameLbl"));
-        TableColumn<NSLRowModel, String> fileSizeColumn = new TableColumn<>(resourceBundle.getString("tableSizeLbl"));
-        TableColumn<NSLRowModel, Boolean> uploadColumn = new TableColumn<>(resourceBundle.getString("tableUploadLbl"));
+        TableColumn<NSLRowModel, String> statusColumn = new TableColumn<>(resourceBundle.getString("tab1_table_Lbl_Status"));
+        TableColumn<NSLRowModel, String> fileNameColumn = new TableColumn<>(resourceBundle.getString("tab1_table_Lbl_FileName"));
+        TableColumn<NSLRowModel, String> fileSizeColumn = new TableColumn<>(resourceBundle.getString("tab1_table_Lbl_Size"));
+        TableColumn<NSLRowModel, Boolean> uploadColumn = new TableColumn<>(resourceBundle.getString("tab1_table_Lbl_Upload"));
 
         statusColumn.setEditable(false);
         fileNameColumn.setEditable(false);
@@ -107,7 +103,6 @@ public class NSTableViewController implements Initializable {
                     @Override
                     public void changed(ObservableValue<? extends Boolean> observableValue, Boolean oldValue, Boolean newValue) {
                         model.setMarkForUpload(newValue);
-                        restrictSelection(model);
                     }
                 });
                 return booleanProperty;
@@ -127,7 +122,7 @@ public class NSTableViewController implements Initializable {
                     public TableRow<NSLRowModel> call(TableView<NSLRowModel> nslRowModelTableView) {
                         final TableRow<NSLRowModel> row = new TableRow<>();
                         ContextMenu contextMenu = new ContextMenu();
-                        MenuItem deleteMenuItem = new MenuItem(resourceBundle.getString("contextMenuBtnDelete"));
+                        MenuItem deleteMenuItem = new MenuItem(resourceBundle.getString("tab1_table_contextMenu_Btn_BtnDelete"));
                         deleteMenuItem.setOnAction(new EventHandler<ActionEvent>() {
                             @Override
                             public void handle(ActionEvent actionEvent) {
@@ -137,7 +132,7 @@ public class NSTableViewController implements Initializable {
                                 table.refresh();
                             }
                         });
-                        MenuItem deleteAllMenuItem = new MenuItem(resourceBundle.getString("contextMenuBtnDeleteAll"));
+                        MenuItem deleteAllMenuItem = new MenuItem(resourceBundle.getString("tab1_table_contextMenu_Btn_DeleteAll"));
                         deleteAllMenuItem.setOnAction(new EventHandler<ActionEvent>() {
                             @Override
                             public void handle(ActionEvent actionEvent) {
@@ -162,7 +157,7 @@ public class NSTableViewController implements Initializable {
                                 if (!row.isEmpty() && mouseEvent.getButton() == MouseButton.PRIMARY){
                                     NSLRowModel thisItem = row.getItem();
                                     thisItem.setMarkForUpload(!thisItem.isMarkForUpload());
-                                    restrictSelection(thisItem);
+                                    table.refresh();
                                 }
                                 mouseEvent.consume();
                             }
@@ -175,18 +170,6 @@ public class NSTableViewController implements Initializable {
         table.getColumns().addAll(statusColumn, fileNameColumn, fileSizeColumn, uploadColumn);
     }
     /**
-     * See uploadColumn callback. In case of GoldLeaf we have to restrict selection
-     * */
-    private void restrictSelection(NSLRowModel modelChecked){
-        if (!protocol.equals("TinFoil") && rowsObsLst.size() > 1) {       // Tinfoil doesn't need any restrictions. If only one file in list, also useless
-            for (NSLRowModel model: rowsObsLst){
-                if (model != modelChecked)
-                    model.setMarkForUpload(false);
-            }
-        }
-        table.refresh();
-    }
-    /**
      * Add files when user selected them
      * */
     public void setFiles(List<File> newFiles){
@@ -196,21 +179,15 @@ public class NSTableViewController implements Initializable {
                     filesAlreayInList.add(model.getNspFileName());
             for (File file: newFiles)
                 if (!filesAlreayInList.contains(file.getName())) {
-                    if (protocol.equals("TinFoil"))
-                        rowsObsLst.add(new NSLRowModel(file, true));
-                    else
-                        rowsObsLst.add(new NSLRowModel(file, false));
+                    rowsObsLst.add(new NSLRowModel(file, true));
                 }
         }
         else {
             for (File file: newFiles)
-                if (protocol.equals("TinFoil"))
-                    rowsObsLst.add(new NSLRowModel(file, true));
-                else
-                    rowsObsLst.add(new NSLRowModel(file, false));
+                rowsObsLst.add(new NSLRowModel(file, true));
             MediatorControl.getInstance().getContoller().disableUploadStopBtn(false);
         }
-        rowsObsLst.get(0).setMarkForUpload(true);
+        //rowsObsLst.get(0).setMarkForUpload(true);
         table.refresh();
     }
     /**
@@ -237,14 +214,16 @@ public class NSTableViewController implements Initializable {
                 return null;
         }
     }
+    public boolean isFilesForUploadListEmpty(){
+        return rowsObsLst.isEmpty();
+    }
     /**
      * Update files in case something is wrong. Requested from UsbCommunications
      * */
     public void setFileStatus(String fileName, EFileStatus status){
         for (NSLRowModel model: rowsObsLst){
-            if (model.getNspFileName().equals(fileName)){
+            if (model.getNspFileName().equals(fileName))
                 model.setStatus(status);
-            }
         }
         table.refresh();
     }
@@ -252,25 +231,10 @@ public class NSTableViewController implements Initializable {
      * Called if selected different USB protocol
      * */
     public void setNewProtocol(String newProtocol){
-        protocol = newProtocol;
         if (rowsObsLst.isEmpty())
             return;
-        if (newProtocol.equals("TinFoil")){
-            for (NSLRowModel model: rowsObsLst)
-                model.setMarkForUpload(true);
-        }
-        else {
-            ListIterator<NSLRowModel> iterator = rowsObsLst.listIterator();
-            while (iterator.hasNext()){
-                NSLRowModel current = iterator.next();
-                if (current.getNspFileName().toLowerCase().endsWith("xci"))
-                    iterator.remove();
-                else
-                    current.setMarkForUpload(false);
-            }
-            if (!rowsObsLst.isEmpty())
-                rowsObsLst.get(0).setMarkForUpload(true);
-        }
+        if (! newProtocol.equals("TinFoil"))
+            rowsObsLst.removeIf(current -> current.getNspFileName().toLowerCase().endsWith("xci"));
         table.refresh();
     }
 

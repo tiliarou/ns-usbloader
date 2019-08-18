@@ -12,10 +12,9 @@ import java.util.Locale;
 import java.util.ResourceBundle;
 
 public class NSLMain extends Application {
-    public static final String appVersion = "v0.5.2";
+    public static final String appVersion = "v0.6";
     @Override
     public void start(Stage primaryStage) throws Exception{
-
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/NSLMain.fxml"));
 
         Locale userLocale = new Locale(AppPreferences.getInstance().getLanguage());      // NOTE: user locale based on ISO3 Language codes
@@ -33,8 +32,8 @@ public class NSLMain extends Application {
 
         primaryStage.setTitle("NS-USBloader "+appVersion);
         primaryStage.setMinWidth(600);
-        primaryStage.setMinHeight(375);
-        Scene mainScene = new Scene(root, 800, 400);
+        primaryStage.setMinHeight(400);
+        Scene mainScene = new Scene(root, 800, 425);
 
         mainScene.getStylesheets().add(AppPreferences.getInstance().getTheme());
 
