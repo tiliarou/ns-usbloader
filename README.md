@@ -4,7 +4,7 @@
 
 [Support author](#support-this-app)
 
-NS-USBloader is a PC-side **[Adubbz/TinFoil](https://github.com/Adubbz/Tinfoil/)** (version 0.2.1; USB and Network) and **GoldLeaf** (USB) NSP installer. Replacement for default **usb_install_pc.py**, **remote_install_pc.py** *(never ever use this. even if you brave. no idea why it works.)* and **GoldTree**.
+NS-USBloader is a PC-side **[Adubbz/TinFoil](https://github.com/Adubbz/Tinfoil/)** (version 0.2.1; USB and Network) and **GoldLeaf** (USB) NSP installer. Replacement for default **usb_install_pc.py**, **remote_install_pc.py** and **GoldTree**.
 
 [Click here for Android version ;)](https://github.com/developersu/ns-usbloader-mobile)
 
@@ -12,7 +12,7 @@ With GUI and cookies. Works on Windows, macOS and Linux.
 
 Sometimes I add new posts about this project [on my home page](https://developersu.blogspot.com/search/label/NS-USBloader).
 
-![Screenshot](https://farm8.staticflickr.com/7809/46703921964_53f60f04ed_o.png)
+![Screenshot](https://live.staticflickr.com/65535/48962978677_4c3913e8a9_o.png)
 
 #### License
 
@@ -23,6 +23,10 @@ Sometimes I add new posts about this project [on my home page](https://developer
 * [usb4java](https://mvnrepository.com/artifact/org.usb4java/usb4java)
 * Few icons taken from: [materialdesignicons.com](http://materialdesignicons.com/)
 
+#### List of awesome contributors!
+
+* [wolfposd](https://github.com/wolfposd)
+
 #### Thanks for the great work done by our translators!
 
 * French by [Stephane Meden (JackFromNice)](https://github.com/JackFromNice) 
@@ -30,10 +34,20 @@ Sometimes I add new posts about this project [on my home page](https://developer
 * Korean by [DDinghoya](https://github.com/DDinghoya)
 * Portuguese by [almircanella](https://github.com/almircanella)
 * Spanish by [/u/cokimaya007](https://www.reddit.com/u/cokimaya007), Kuziel Alejandro
+* Chinese by [Huang YunKun (htynkn)](https://github.com/htynkn)
+* German by [Swarsele](https://github.com/Swarsele)
+* Vietnamese by [Hai Phan Nguyen (pnghai)](https://github.com/pnghai)
 
 ### System requirements
 
 JRE/JDK 8u60 or higher.
+
+### Table of supported GoldLeaf versions
+| GoldLeaf version | NS-USBloader version |
+| ---------------- | -------------------- |
+| v0.5             | v0.4 - v0.5.2, v0.8+ |
+| v0.6.1           | v0.6                 |
+| v0.7             | v0.7 - v0.8+         |
 
 ### Usage
 ##### Linux:
@@ -85,7 +99,7 @@ There are three tabs. First one is main.
 
 At the top of you selecting from drop-down application and protocol that you're going to use. For GoldLeaf only USB is available. Lamp icon stands for switching themes (light or dark).
 
-Then you may drag-n-drop folder with NSPs OR files to application or use 'Select NSP files' button. Multiple selection for files available. Click it again and select files from another folder it you want, it will be added into the table.
+Then you may drag-n-drop files (split-files aka folders) to application or use 'Select NSP files' button. Multiple selection for files available. Click it again and select files from another folder it you want, it will be added into the table.
 
 Table.
 
@@ -96,8 +110,6 @@ Also you can use space to select/un-select files and 'delete' button for deletin
 For GoldLeaf v0.6.1 and NS-USBloader v0.6 (and higher) you will have to use 'Explore content' -> 'Remote PC (via USB)' You will see two drives HOME:/ and VIRT:/. First drive is pointing to your home directory. Second one is reflection of what you've added to table (first application tab). Also VIRT:/ drive have limited functionality in comparison to HOME:/. E.g. you can't write files to this drive since it's not a drive. But don't worry, it won't make any impact on GoldLeaf or your NS if you try.
 
 Also, for GoldLeaf write files (from NS to PC): You have to 'Stop execution' properly before accessing files transferred from GL. Usually you have to wait 5sec or less. It will guarantee that your files properly written to PC.
-
-## NOTE: NS-USBloader v0.6 doesn't support writing files from NS to PC if file size is greater than 8mb
 
 ##### Second tab.
 
@@ -111,14 +123,16 @@ Also here you can:
 
 That's where all logs dropped. Verbose information about transmissions comes here.
 
-Why when 'NET' once started it never ends?
-
-Because there is HTTP server inside of application. It can't determine the moment when all transmissions finishes (unless they failed). So you have to look on your NS screen and 'Interrupt' it once done.
-
 ### Known bugs
-* Unable to interrupt transmission when using TinFoil (when user sent NSP list but didn't select anything on NS). Sometimes this issue also appears when network transmission started and nothing received from NS.
+* 'NET' once started it never ends:
+
+It happens because there is HTTP server inside of application. It can't determine the moment when all transmissions finishes (unless they failed). So you have to look on your NS screen and 'Interrupt' it once done.
+
+* Unable to interrupt transmission when network transmission started and nothing received from NS.
 
 ### Other notes
+Alternative build for Windows 10 is recommended for all Windows 10 users. It also works well on Linux and any other Windows PC and even on macOS Mojave, but doesn't work on all previous versions of macOS. 
+
 'Status' = 'Uploaded' that appears in the table does not mean that file has been installed. It means that it has been sent to NS without any issues! That's what this app about. 
 Handling successful/failed installation is a purpose of the other side application: TinFoil or GoldLeaf. And they don't provide any feedback interfaces so I can't detect success/failure.
 
@@ -126,13 +140,16 @@ usb4java since NS-USBloader-v0.2.3 switched to 1.2.0 instead of 1.3.0. This shou
 
 ### Translators!
 If you want to see this app translated to your language, go grab [this file](https://github.com/developersu/ns-usbloader/blob/master/src/main/resources/locale.properties) and translate it.
-Upload somewhere (create PR, use pastebin/google drive/whatever else). [Create new issue](https://github.com/developersu/ns-usbloader/issues) and post a link. I'll grab it and add. 
+
+Upload somewhere (create PR, use pastebin/google drive/whatever else). [Create new issue](https://github.com/developersu/ns-usbloader/issues) and post a link. I'll grab it and add.
+
+To convert files of any locale to readable format (and vise-versa) you can use this site [https://itpro.cz/juniconv/](https://itpro.cz/juniconv/)
+ 
 
 #### TODO (maybe):
 - [x] [Android support](https://github.com/developersu/ns-usbloader-mobile)
 - [ ] File order sort (non-critical)
 - [ ] More deep file analyze before uploading.
-- [ ] XCI support
 
 ## Support this app
 

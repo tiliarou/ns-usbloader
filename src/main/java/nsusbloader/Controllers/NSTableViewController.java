@@ -2,28 +2,22 @@ package nsusbloader.Controllers;
 
 import javafx.beans.binding.Bindings;
 import javafx.beans.property.SimpleBooleanProperty;
-import javafx.beans.value.ChangeListener;
-import javafx.beans.value.ObservableValue;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.event.ActionEvent;
-import javafx.event.EventHandler;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.*;
 import javafx.scene.control.cell.CheckBoxTableCell;
 import javafx.scene.control.cell.PropertyValueFactory;
 import javafx.scene.input.KeyCode;
-import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseButton;
-import javafx.scene.input.MouseEvent;
-import javafx.util.Callback;
 import nsusbloader.MediatorControl;
 import nsusbloader.NSLDataTypes.EFileStatus;
 
 import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.ResourceBundle;
 
@@ -40,9 +34,7 @@ public class NSTableViewController implements Initializable {
         table.setEditable(false);               // At least with hacks it works as expected. Otherwise - null pointer exception
         table.getSelectionModel().setSelectionMode(SelectionMode.MULTIPLE);
         table.setColumnResizePolicy(TableView.CONSTRAINED_RESIZE_POLICY);
-        table.setOnKeyPressed(new EventHandler<KeyEvent>() {
-            @Override
-            public void handle(KeyEvent keyEvent) {
+        table.setOnKeyPressed(keyEvent -> {
                 if (!rowsObsLst.isEmpty()) {
                     if (keyEvent.getCode() == KeyCode.DELETE && !MediatorControl.getInstance().getTransferActive()) {
                         rowsObsLst.removeAll(table.getSelectionModel().getSelectedItems());
@@ -57,12 +49,11 @@ public class NSTableViewController implements Initializable {
                     }
                 }
                 keyEvent.consume();
-            }
         });
 
         TableColumn<NSLRowModel, String> statusColumn = new TableColumn<>(resourceBundle.getString("tab1_table_Lbl_Status"));
         TableColumn<NSLRowModel, String> fileNameColumn = new TableColumn<>(resourceBundle.getString("tab1_table_Lbl_FileName"));
-        TableColumn<NSLRowModel, String> fileSizeColumn = new TableColumn<>(resourceBundle.getString("tab1_table_Lbl_Size"));
+        TableColumn<NSLRowModel, Long> fileSizeColumn = new TableColumn<>(resourceBundle.getString("tab1_table_Lbl_Size"));
         TableColumn<NSLRowModel, Boolean> uploadColumn = new TableColumn<>(resourceBundle.getString("tab1_table_Lbl_Upload"));
 
         statusColumn.setEditable(false);
@@ -92,82 +83,89 @@ public class NSTableViewController implements Initializable {
         fileNameColumn.setCellValueFactory(new PropertyValueFactory<>("nspFileName"));
         fileSizeColumn.setCellValueFactory(new PropertyValueFactory<>("nspFileSize"));
         // ><
-        uploadColumn.setCellValueFactory(new Callback<TableColumn.CellDataFeatures<NSLRowModel, Boolean>, ObservableValue<Boolean>>() {
-            @Override
-            public ObservableValue<Boolean> call(TableColumn.CellDataFeatures<NSLRowModel, Boolean> paramFeatures) {
-                NSLRowModel model = paramFeatures.getValue();
+        uploadColumn.setCellValueFactory(paramFeatures -> {
+            NSLRowModel model = paramFeatures.getValue();
 
-                SimpleBooleanProperty booleanProperty = new SimpleBooleanProperty(model.isMarkForUpload());
+            SimpleBooleanProperty booleanProperty = new SimpleBooleanProperty(model.isMarkForUpload());
 
-                booleanProperty.addListener(new ChangeListener<Boolean>() {
-                    @Override
-                    public void changed(ObservableValue<? extends Boolean> observableValue, Boolean oldValue, Boolean newValue) {
-                        model.setMarkForUpload(newValue);
-                    }
-                });
-                return booleanProperty;
-            }
+            booleanProperty.addListener((observableValue, oldValue, newValue) -> model.setMarkForUpload(newValue));
+            return booleanProperty;
         });
 
-        uploadColumn.setCellFactory(new Callback<TableColumn<NSLRowModel, Boolean>, TableCell<NSLRowModel, Boolean>>() {
+        uploadColumn.setCellFactory(paramFeatures -> new CheckBoxTableCell<>());
+        fileSizeColumn.setCellFactory(col -> new TableCell<NSLRowModel, Long>() {
             @Override
-            public TableCell<NSLRowModel, Boolean> call(TableColumn<NSLRowModel, Boolean> paramFeatures) {
-                CheckBoxTableCell<NSLRowModel, Boolean> cell = new CheckBoxTableCell<>();
-                return cell;
+            protected void updateItem(Long length, boolean empty) {
+                if (length == null || empty) {
+                    setText("");
+                }
+                else {
+                    setText(formatByteSize(length));
+                }
             }
         });
         table.setRowFactory(        // this shit is made to implement context menu. It's such a pain..
-                new Callback<TableView<NSLRowModel>, TableRow<NSLRowModel>>() {
-                    @Override
-                    public TableRow<NSLRowModel> call(TableView<NSLRowModel> nslRowModelTableView) {
-                        final TableRow<NSLRowModel> row = new TableRow<>();
-                        ContextMenu contextMenu = new ContextMenu();
-                        MenuItem deleteMenuItem = new MenuItem(resourceBundle.getString("tab1_table_contextMenu_Btn_BtnDelete"));
-                        deleteMenuItem.setOnAction(new EventHandler<ActionEvent>() {
-                            @Override
-                            public void handle(ActionEvent actionEvent) {
-                                rowsObsLst.remove(row.getItem());
-                                if (rowsObsLst.isEmpty())
-                                    MediatorControl.getInstance().getContoller().disableUploadStopBtn(true);    // TODO: change to something better
-                                table.refresh();
-                            }
-                        });
-                        MenuItem deleteAllMenuItem = new MenuItem(resourceBundle.getString("tab1_table_contextMenu_Btn_DeleteAll"));
-                        deleteAllMenuItem.setOnAction(new EventHandler<ActionEvent>() {
-                            @Override
-                            public void handle(ActionEvent actionEvent) {
-                                rowsObsLst.clear();
-                                MediatorControl.getInstance().getContoller().disableUploadStopBtn(true);    // TODO: change to something better
-                                table.refresh();
-                            }
-                        });
-                        contextMenu.getItems().addAll(deleteMenuItem, deleteAllMenuItem);
+                nslRowModelTableView -> {
+                    final TableRow<NSLRowModel> row = new TableRow<>();
+                    ContextMenu contextMenu = new ContextMenu();
+                    MenuItem deleteMenuItem = new MenuItem(resourceBundle.getString("tab1_table_contextMenu_Btn_BtnDelete"));
+                    deleteMenuItem.setOnAction(actionEvent -> {
+                        rowsObsLst.remove(row.getItem());
+                        if (rowsObsLst.isEmpty())
+                            MediatorControl.getInstance().getContoller().disableUploadStopBtn(true);    // TODO: change to something better
+                        table.refresh();
+                    });
+                    MenuItem deleteAllMenuItem = new MenuItem(resourceBundle.getString("tab1_table_contextMenu_Btn_DeleteAll"));
+                    deleteAllMenuItem.setOnAction(actionEvent -> {
+                        rowsObsLst.clear();
+                        MediatorControl.getInstance().getContoller().disableUploadStopBtn(true);    // TODO: change to something better
+                        table.refresh();
+                    });
+                    contextMenu.getItems().addAll(deleteMenuItem, deleteAllMenuItem);
 
-                        row.setContextMenu(contextMenu);
-                        row.contextMenuProperty().bind(
-                                Bindings.when(
-                                        Bindings.isNotNull(
-                                                row.itemProperty()))
-                                                .then(MediatorControl.getInstance().getTransferActive()?(ContextMenu)null:contextMenu)
-                                                .otherwise((ContextMenu) null)
-                        );
-                        row.setOnMouseClicked(new EventHandler<MouseEvent>() {      // Just.. don't ask..
-                            @Override
-                            public void handle(MouseEvent mouseEvent) {
-                                if (!row.isEmpty() && mouseEvent.getButton() == MouseButton.PRIMARY){
-                                    NSLRowModel thisItem = row.getItem();
-                                    thisItem.setMarkForUpload(!thisItem.isMarkForUpload());
-                                    table.refresh();
-                                }
-                                mouseEvent.consume();
-                            }
-                        });
-                        return row;
-                    }
+                    row.setContextMenu(contextMenu);
+                    row.contextMenuProperty().bind(
+                            Bindings.when(
+                                    Bindings.isNotNull(
+                                            row.itemProperty()))
+                                            .then(MediatorControl.getInstance().getTransferActive()?null:contextMenu)
+                                            .otherwise((ContextMenu) null)
+                    );
+                    // Just.. don't ask..
+                    row.setOnMouseClicked(mouseEvent -> {
+                        if (!row.isEmpty() && mouseEvent.getButton() == MouseButton.PRIMARY){
+                            NSLRowModel thisItem = row.getItem();
+                            thisItem.setMarkForUpload(!thisItem.isMarkForUpload());
+                            table.refresh();
+                        }
+                        mouseEvent.consume();
+                    });
+                    return row;
                 }
         );
         table.setItems(rowsObsLst);
-        table.getColumns().addAll(statusColumn, fileNameColumn, fileSizeColumn, uploadColumn);
+        table.getColumns().add(statusColumn);
+        table.getColumns().add(fileNameColumn);
+        table.getColumns().add(fileSizeColumn);
+        table.getColumns().add(uploadColumn);
+    }
+    /**
+     * Add single file when user selected it (Split file usually)
+     * */
+    public void setFile(File file){
+        if ( ! rowsObsLst.isEmpty()){
+            List<String> filesAlreayInList = new ArrayList<>();
+            for (NSLRowModel model : rowsObsLst)
+                filesAlreayInList.add(model.getNspFileName());
+
+            if ( ! filesAlreayInList.contains(file.getName()))
+                rowsObsLst.add(new NSLRowModel(file, true));
+        }
+        else {
+            rowsObsLst.add(new NSLRowModel(file, true));
+            MediatorControl.getInstance().getContoller().disableUploadStopBtn(false);
+        }
+        table.refresh();
     }
     /**
      * Add files when user selected them
@@ -233,9 +231,25 @@ public class NSTableViewController implements Initializable {
     public void setNewProtocol(String newProtocol){
         if (rowsObsLst.isEmpty())
             return;
-        if (! newProtocol.equals("TinFoil"))
-            rowsObsLst.removeIf(current -> current.getNspFileName().toLowerCase().endsWith("xci"));
+        if (newProtocol.equals("GoldLeaf")) {
+            rowsObsLst.removeIf(current -> current.getNspFileName().toLowerCase().endsWith("xci") ||
+                    current.getNspFileName().toLowerCase().endsWith("nsz") ||
+                    current.getNspFileName().toLowerCase().endsWith("xcz"));
+        }
+        else
+            rowsObsLst.removeIf(current -> ! current.getNspFileName().toLowerCase().endsWith("nsp"));
         table.refresh();
+    }
+    /**
+     * Used for showing in 'Size' column size representation in human-readable format
+     * */
+    private String formatByteSize(double length) {
+        final String[] unitNames = { "bytes", "KiB", "MiB", "GiB", "TiB"};
+        int i;
+        for (i = 0; length > 1024 && i < unitNames.length - 1; i++) {
+            length = length / 1024;
+        }
+      return String.format("%,.2f %s", length, unitNames[i]);
     }
 
 }

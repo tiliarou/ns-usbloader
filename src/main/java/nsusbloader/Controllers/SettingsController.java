@@ -61,7 +61,15 @@ public class SettingsController implements Initializable {
     @FXML
     private ChoiceBox<String> langCB;
 
+    @FXML
+    private CheckBox glOldVerCheck;
+
+    @FXML
+    private ChoiceBox<String> glOldVerChoice;
+
     private HostServices hs;
+
+    private static final String[] oldGlSupportedVersions = {"v0.5"};
 
     @Override
     public void initialize(URL url, ResourceBundle resourceBundle) {
@@ -72,9 +80,7 @@ public class SettingsController implements Initializable {
         expertSettingsVBox.setDisable(!AppPreferences.getInstance().getExpertMode());
 
         expertModeCb.setSelected(AppPreferences.getInstance().getExpertMode());
-        expertModeCb.setOnAction(e->{
-                expertSettingsVBox.setDisable(!expertModeCb.isSelected());
-        });
+        expertModeCb.setOnAction(e-> expertSettingsVBox.setDisable(!expertModeCb.isSelected()));
 
         autoDetectIpCb.setSelected(AppPreferences.getInstance().getAutoDetectIp());
         pcIpTextField.setDisable(AppPreferences.getInstance().getAutoDetectIp());
@@ -141,7 +147,7 @@ public class SettingsController implements Initializable {
             else
                 return change;
         }));
-        pcPortTextField.setTextFormatter(new TextFormatter<Object>(change -> {
+        pcPortTextField.setTextFormatter(new TextFormatter<>(change -> {
             if (change.getControlNewText().matches("^[0-9]{0,5}$")) {
                 if (!change.getControlNewText().isEmpty()
                         && ((Integer.parseInt(change.getControlNewText()) > 65535) || (Integer.parseInt(change.getControlNewText()) == 0))
@@ -162,9 +168,7 @@ public class SettingsController implements Initializable {
         }));
 
         newVersionLink.setVisible(false);
-        newVersionLink.setOnAction(e->{
-            hs.showDocument(newVersionLink.getText());
-        });
+        newVersionLink.setOnAction(e-> hs.showDocument(newVersionLink.getText()));
 
         autoCheckUpdCb.setSelected(AppPreferences.getInstance().getAutoCheckUpdates());
 
@@ -201,7 +205,8 @@ public class SettingsController implements Initializable {
 
         File jarFile;
         try{
-            jarFile = new File(URLDecoder.decode(getClass().getProtectionDomain().getCodeSource().getLocation().getPath(), "utf-8"));
+            String encodedJarLocation = getClass().getProtectionDomain().getCodeSource().getLocation().getPath().replace("+", "%2B");
+            jarFile = new File(URLDecoder.decode(encodedJarLocation, "UTF-8"));
         }
         catch (UnsupportedEncodingException uee){
             uee.printStackTrace();
@@ -244,7 +249,20 @@ public class SettingsController implements Initializable {
                     ResourceBundle.getBundle("locale", new Locale(langCB.getSelectionModel().getSelectedItem()))
                             .getString("windowBodyRestartToApplyLang"));
         });
-
+        // Set supported old versions
+        glOldVerChoice.getItems().addAll(oldGlSupportedVersions);
+        String oldVer = AppPreferences.getInstance().getUseOldGlVersion();  // Overhead; Too much validation of consistency
+        if (Arrays.asList(oldGlSupportedVersions).contains(oldVer)) {
+            glOldVerChoice.getSelectionModel().select(oldVer);
+            glOldVerChoice.setDisable(false);
+            glOldVerCheck.setSelected(true);
+        }
+        else {
+            glOldVerChoice.getSelectionModel().select(0);
+            glOldVerChoice.setDisable(true);
+            glOldVerCheck.setSelected(false);
+        }
+        glOldVerCheck.setOnAction(e-> glOldVerChoice.setDisable(! glOldVerCheck.isSelected()) );
     }
     public boolean getNSPFileFilterForGL(){return nspFilesFilterForGLCB.isSelected(); }
     public boolean getExpertModeSelected(){ return expertModeCb.isSelected(); }
@@ -258,12 +276,19 @@ public class SettingsController implements Initializable {
     public String getHostPort(){ return pcPortTextField.getText(); }
     public String getHostExtra(){ return pcExtraTextField.getText(); }
     public boolean getAutoCheckForUpdates(){ return autoCheckUpdCb.isSelected(); }
-    public boolean getTfXCISupport(){ return tfXciSpprtCb.isSelected(); }
+    public boolean getTfXciNszXczSupport(){ return tfXciSpprtCb.isSelected(); }           // Used also for NSZ/XCZ
 
     public void registerHostServices(HostServices hostServices){this.hs = hostServices;}
 
     public void setNewVersionLink(String newVer){
         newVersionLink.setVisible(true);
         newVersionLink.setText("https://github.com/developersu/ns-usbloader/releases/tag/"+newVer);
+    }
+
+    public String getGlOldVer() {
+        if (glOldVerCheck.isSelected())
+            return glOldVerChoice.getValue();
+        else
+            return "";
     }
 }

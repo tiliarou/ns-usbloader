@@ -12,7 +12,7 @@ import java.util.Locale;
 import java.util.ResourceBundle;
 
 public class NSLMain extends Application {
-    public static final String appVersion = "v0.6";
+    public static final String appVersion = "v0.9";
     @Override
     public void start(Stage primaryStage) throws Exception{
         FXMLLoader loader = new FXMLLoader(getClass().getResource("/NSLMain.fxml"));
@@ -31,9 +31,12 @@ public class NSLMain extends Application {
         );
 
         primaryStage.setTitle("NS-USBloader "+appVersion);
-        primaryStage.setMinWidth(600);
-        primaryStage.setMinHeight(400);
-        Scene mainScene = new Scene(root, 800, 425);
+        primaryStage.setMinWidth(650);
+        primaryStage.setMinHeight(450);
+        Scene mainScene = new Scene(root,
+                AppPreferences.getInstance().getSceneWidth(),
+                AppPreferences.getInstance().getSceneHeight()
+        );
 
         mainScene.getStylesheets().add(AppPreferences.getInstance().getTheme());
 
@@ -48,7 +51,11 @@ public class NSLMain extends Application {
 
         NSLMainController controller = loader.getController();
         controller.setHostServices(getHostServices());
-        primaryStage.setOnHidden(e-> controller.exit());
+        primaryStage.setOnHidden(e-> {
+            AppPreferences.getInstance().setSceneHeight(mainScene.getHeight());
+            AppPreferences.getInstance().setSceneWidth(mainScene.getWidth());
+            controller.exit();
+        });
     }
 
     public static void main(String[] args) {
